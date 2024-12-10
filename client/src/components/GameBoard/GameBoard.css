@@ -1,0 +1,25 @@
+/* use CSS grid for 2-D render of gameboard */
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr); 
+    width: 300px;
+    height: 300px;
+    margin: 0 auto;
+    border: 2px solid black;
+  }
+  
+  .cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    font-size: 2rem;
+    cursor: pointer;
+    user-select: none; /* prevent text selection */
+  }
+  
+  .cell:hover {
+    background-color: #e0e0e0; 
+  }
