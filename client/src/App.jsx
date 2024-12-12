@@ -19,11 +19,17 @@ function App() {
     return () => clearInterval(timer);
   }, [isGameActive]);
 
+  // start game logic
+  const startGame = () => {
+    setIsGameActive(true);
+    setTime(0); // Reset the timer
+  };
   return (
     <div>
-      <Header time={time} />
+      <Header time={time} startGame={startGame} />
       <main>
-        <Outlet /> {/* where game or high scores will render */}
+        <Outlet context={{ startGame }} />{" "}
+        {/* where game or high scores will render */}
       </main>
       <Footer />
     </div>

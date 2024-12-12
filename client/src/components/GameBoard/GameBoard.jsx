@@ -1,47 +1,174 @@
 import "./GameBoard.css";
 import { useState, useEffect } from "react";
+import Header from "../Header/Header";
+import { useOutletContext } from "react-router-dom";
 
 function GameBoard() {
-  // define the state for the board and current player
+  // define states
   const [board, setBoard] = useState(Array(9).fill(null));
+  const [playerName, setPlayerName] = useState("");
   const [currentPlayer, setCurrentPlayer] = useState("X");
-  const [time, setTime] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const { startGame } = useOutletContext(); // access startGame passed via Outlet
 
-  // start timer at new game and reset
-  useEffect(() => {
-    let timer;
-    if (isGameActive) {
-      timer = setInterval(() => setTime((time) => time + 1), 1000);
+  // check for winner
+  const checkWinner = (board) => {
+    const winningCombinations = [
+      [0, 1, 2], // top row
+      [3, 4, 5], // middle row
+      [6, 7, 8], // bottom row
+      [0, 3, 6], // left column
+      [1, 4, 7], // middle column
+      [2, 5, 8], // right column
+      [0, 4, 8], // main diagonal
+      [2, 4, 6], // anti-diagonal
+    ];
+
+    for (let combo of winningCombinations) {
+      const [a, b, c] = combo;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return board[a]; // return "X" or "O"
+      }
     }
-    return () => clearInterval(timer);
-  }, [isGameActive]);
+
+    return board.every((cell) => cell) ? "Draw" : null; // check for a draw
+  };
+
+  // Restart game logic
+  const restartGame = () => {
+    setBoard(Array(9).fill(null));
+    setCurrentPlayer("X");
+    setTime(0);
+    setIsGameActive(true);
+    setShowModal(false);
+  };
+
+  // handle AI moves
+  const makeAIMove = (updatedBoard) => {
+    const availableCells = updatedBoard
+      .map((value, index) => (value === null ? index : null))
+      .filter((val) => val !== null);
+
+    if (availableCells.length === 0) return;
+
+    const randomMove =
+      availableCells[Math.floor(Math.random() * availableCells.length)];
+
+    if (randomMove !== undefined) {
+      const newBoard = [...updatedBoard];
+      newBoard[randomMove] = "O";
+      setBoard(newBoard);
+
+      const result = checkWinner(newBoard);
+      if (result) {
+        setIsGameActive(false);
+        setModalMessage(result === "Draw" ? "It's a draw!" : `${result} wins!`);
+        setShowModal(true);
+        return;
+      }
+
+      setCurrentPlayer("X");
+    }
+  };
 
   // handle cell clicks
   const handleClick = (index) => {
-    if (board[index]) return; // ignore clicks on filled squares
+    if (board[index] || checkWinner(board)) return; // ignore clicks if cell occupied OR game is over
 
-    // update the board after each click
     const newBoard = [...board];
     newBoard[index] = currentPlayer;
+    setBoard(newBoard);
 
-    setBoard(newBoard); // update state with new board
-    setCurrentPlayer(currentPlayer === "X" ? "O" : "X"); // switches player to alternate turns
+    const result = checkWinner(newBoard);
+    if (result) {
+      setIsGameActive(false); // stop the timer
+      setModalMessage(result === "Draw" ? "It's a draw!" : `${result} wins!`);
+      setShowModal(true);
+      return;
+    }
+
+    setCurrentPlayer("O");
+    setTimeout(() => makeAIMove(newBoard), 500); // delays AI's move
   };
 
   return (
-    <div>
+    <div className="game-container">
+      {/* bootstrap modal at start of game */}
+      {!isGameActive && (
+        <div className="start-game-modal">
+          <h2>Welcome to Tik Tak Tok!</h2>
+          <input
+            type="text"
+            placeholder="Enter your name"
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            aria-label="Enter your name"
+          />
+          <button onClick={startGame}>Start Game</button>
+        </div>
+      )}
+
+      {/* gameboard */}
       <div className="board">
         {board.map((value, index) => (
           <div
             key={index}
             className="cell"
-            onClick={() => handleClick(index)} // attach click handler
+            onClick={() => handleClick(index)}
+            role="button"
+            aria-label={`Cell ${index + 1}: ${value || "empty"}`}
           >
-            {value /* display "X" or "O" */}
+            {value}
           </div>
         ))}
       </div>
+
+      {/* bootstrap gameover modal */}
+      {showModal && (
+        <div
+          className={`modal fade ${showModal ? "show" : ""}`}
+          tabIndex="-1"
+          style={{ display: showModal ? "block" : "none" }}
+          role="dialog"
+          aria-labelledby="gameOverModal"
+          aria-hidden={!showModal}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="gameOverModal">
+                  Game Over
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowModal(false)}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body">{modalMessage}</div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={restartGame}
+                >
+                  Restart Game
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
