@@ -9,26 +9,28 @@ const HighScores = ({ playerTime }) => {
     setHighScores(storedScores);
   }, []);
 
-  const saveScore = (time) => {
-    const newScores = [...highScores, { time }];
-    newScores.sort((a, b) => a.time - b.time); // sort scores
-    setHighScores(newScores.slice(0, 10)); // keep top 10
-    localStorage.setItem("highScores", JSON.stringify(newScores)); // save to localStorage
-  };
+  //   const saveScore = (time) => {
+  //     const newScores = [...highScores, { time }];
+  //     newScores.sort((a, b) => a.time - b.time); // sort scores
+  //     setHighScores(newScores.slice(0, 10)); // keep top 10
+  //     localStorage.setItem("highScores", JSON.stringify(newScores)); // save to localStorage
+  //   };
 
   // call this function after the player wins
-  useEffect(() => {
-    if (playerTime) {
-      saveScore(playerTime);
-    }
-  }, [playerTime]);
+  //   useEffect(() => {
+  //     if (playerTime) {
+  //       saveScore(playerTime);
+  //     }
+  //   }, [playerTime]);
 
   return (
     <div>
       <h2>High Scores</h2>
       <ul>
         {highScores.map((score, index) => (
-          <li key={index}>{score.time} seconds</li>
+          <li key={index}>
+            {score.name}: {score.time} seconds
+          </li>
         ))}
       </ul>
     </div>

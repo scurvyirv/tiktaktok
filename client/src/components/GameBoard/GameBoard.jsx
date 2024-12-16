@@ -1,5 +1,5 @@
 import "./GameBoard.css";
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import Header from "../Header/Header";
 import { useOutletContext } from "react-router-dom";
 
@@ -11,7 +11,9 @@ function GameBoard() {
   const [isGameActive, setIsGameActive] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const { startGame } = useOutletContext(); // access startGame passed via Outlet
+
+  // access parent functions via outlet
+  const { startGame, endGame } = useOutletContext();
 
   // check for winner
   const checkWinner = (board) => {
@@ -75,7 +77,8 @@ function GameBoard() {
 
   // handle cell clicks
   const handleClick = (index) => {
-    if (board[index] || checkWinner(board)) return; // ignore clicks if cell occupied OR game is over
+    // ignore clicks if cell occupied OR game is over
+    if (board[index] || checkWinner(board)) return;
 
     const newBoard = [...board];
     newBoard[index] = currentPlayer;
@@ -83,14 +86,22 @@ function GameBoard() {
 
     const result = checkWinner(newBoard);
     if (result) {
-      setIsGameActive(false); // stop the timer
+      setIsGameActive(false);
       setModalMessage(result === "Draw" ? "It's a draw!" : `${result} wins!`);
       setShowModal(true);
+
+      // call parent function to end game
+      endGame();
       return;
     }
 
-    setCurrentPlayer("O");
-    setTimeout(() => makeAIMove(newBoard), 500); // delays AI's move
+    // switch players and make AI move if "O"
+    const nextPlayer = currentPlayer === "X" ? "O" : "X";
+    setCurrentPlayer(nextPlayer);
+
+    if (nextPlayer === "O") {
+      setTimeout(() => makeAIMove(newBoard), 500); // delays AI's move
+    }
   };
 
   return (
